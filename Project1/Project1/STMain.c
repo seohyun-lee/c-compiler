@@ -4,33 +4,107 @@
 #include <stdlib.h>
 
 #define SYM_TABLE_SIZE  100
-#define STR_POOL_SIZE 8
+#define STR_POOL_SIZE 500
 #define HASH_SIZE 23
 #define TRUE    1
 #define FALSE   0
 
-char separators[] = " ,;\t\n\r\n"; //구분자 (윈도우 캐리지리턴은 \r\n)
+char separators[] = " ,;\t\n\r\n"; //구분자 종류 (왜 \n이 두개?)
+int sym_table[SYM_TABLE_SIZE][3];
 char str_pool[STR_POOL_SIZE];
-char hash_bucket[HASH_SIZE];
+//char hash_bucket[HASH_SIZE];
 int sym_id; // 0으로 기본 초기화
 
-typedef struct {
-    int index;
-    int length;
-    char* symbol;
-} Symbol;
+typedef struct SymbolNode {
+    int sym_id;
+    struct SymbolNode* next;
+} SymbolNode;
 
-Symbol sym_table[SYM_TABLE_SIZE];
-
+SymbolNode* hash_bucket[HASH_SIZE];  // 각 버킷의 연결 리스트 헤드
 
 void print_sym_table(void)
 {
     printf("\nSymbol Table\nIndex\tLength\tSymbol\n"); // ID였다면 i+1
     for (int i = 0; i < sym_id; i++) {
-        printf("%d\t%d\t%s\n", sym_table[i].index, sym_table[i].length, sym_table[i].symbol);
+        int index = sym_table[i][1];
+        int length = sym_table[i][2];
+
+        printf("%d\t%d\t", i, length);
+        for (int j = 0; j < length; j++) {
+            putchar(str_pool[index + j]);
+        }
+        putchar('\n');
     }
     return;
 }
+
+void print_hash_bucket(void) {
+    printf("\nHash Buckets (Chaining)\n");
+    for (int i = 0; i < HASH_SIZE; i++) {
+        printf("[%d] -> ", i);
+        SymbolNode* node = hash_bucket[i];
+        while (node != NULL) {
+            int idx = sym_table[node->sym_id][1];
+            int len = sym_table[node->sym_id][2];
+            for (int j = 0; j < len; j++) {
+                putchar(str_pool[idx + j]);
+            }
+            printf(" -> ");
+            node = node->next;
+        }
+        printf("NULL\n");
+    }
+    // free
+    for (int i = 0; i < HASH_SIZE; i++) {
+        SymbolNode* node = hash_bucket[i];
+        while (node != NULL) {
+            SymbolNode* tmp = node;
+            node = node->next;
+            free(tmp);
+        }
+    }
+}
+
+int insert_symbol(const char* str, int index_start, int length) {
+    // 새로 추가
+    int key = calc_key(str_pool + index_start);
+    int hash = hash_division_method(key);
+
+    SymbolNode* node = hash_bucket[hash];
+    while (node != NULL) {
+        int idx = sym_table[node->sym_id][1];
+        int l = sym_table[node->sym_id][2];
+
+        if (l == length && strncmp(str_pool + idx, str, length) == 0) {
+            // 중복 식별자 → 기존 ID 출력
+            printf("Already exists: ID=%d, Symbol=", node->sym_id);
+            for (int i = 0; i < l; i++) putchar(str_pool[idx + i]);
+            putchar('\n');
+            return node->sym_id;
+        }
+        node = node->next;
+    }
+
+    // 새 식별자 추가
+    if (sym_id >= SYM_TABLE_SIZE) {
+        fprintf(stderr, "Error: Symbol table overflow\n");
+        return -1;
+    }
+
+    printf("%d\t%.*s\n", hash, length, str);
+
+    sym_table[sym_id][0] = sym_id;
+    sym_table[sym_id][1] = index_start;
+    sym_table[sym_id][2] = length;
+
+    SymbolNode* new_node = (SymbolNode*)malloc(sizeof(SymbolNode));
+    new_node->sym_id = sym_id;
+    new_node->next = hash_bucket[hash];
+    hash_bucket[hash] = new_node;
+
+    return 0;
+}
+
 
 int calc_key(char* str)
 {
@@ -55,6 +129,17 @@ unsigned int hash_midsquare_method(int base) {
     return mid % HASH_SIZE;
 }
 
+int find_symbol(const char* str, int len) {
+    for (int i = 0; i < sym_id; i++) {
+        int idx = sym_table[i][1];
+        int l = sym_table[i][2];
+        if (l == len && strncmp(str_pool + idx, str, len) == 0) {
+            return i;  // 이미 존재하는 심볼의 ID 반환
+        }
+    }
+    return -1;  // 없음
+}
+
 
 
 int main() {
@@ -74,7 +159,7 @@ int main() {
     do { // 파일 끝까지 문자 읽기
         c = fgetc(fp);
 
-        if (index_next >= STR_POOL_SIZE) { // 현재까지 입력한 식별자라는게, 지금 입력중인 식별자는?? \0은??
+        if (index_next >= STR_POOL_SIZE) { // 현재까지 입력한 식별자라는게, 지금 입력중인 식별자는??
             fprintf(stderr, "Error - String Pool overflow\n");
             break;
         }
@@ -87,13 +172,20 @@ int main() {
             }
 
             if (err_flag != TRUE) {
-                int key = calc_key(str_pool + index_start);
-                int hash = hash_division_method(key);
-                printf("%d\t%s\n", hash, str_pool + index_start);
-                sym_table[sym_id].index = index_start;
-                sym_table[sym_id].length = index_next - index_start - 1;
-                sym_table[sym_id].symbol = str_pool + index_start;
-                sym_id++;
+                int id = find_symbol(str_pool + index_start, index_next - index_start - 1);
+                if (id != -1) {
+                    // 이미 존재 → 기존 정보 출력
+                    printf("Already exists: ID=%d, Symbol=", id);
+                    for (int i = 0; i < sym_table[id][2]; i++) {
+                        putchar(str_pool[sym_table[id][1] + i]);
+                    }
+                    putchar('\n');
+                }
+                else {
+                    int length = index_next - index_start - 1;
+                    if (insert_symbol(str_pool + index_start, index_start, length) != -1)
+                        sym_id++;
+                }
                 index_start = index_next;
             }
             else {
@@ -120,6 +212,7 @@ int main() {
     } while (c != EOF);
 
     print_sym_table();
+    print_hash_bucket();
 
     fclose(fp); // 파일 닫기
     return 0;
