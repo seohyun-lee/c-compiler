@@ -39,7 +39,8 @@ HTpointer lookup_hash_table(int index_start, int length, int hscode) {
     while (entry != NULL) {
         // 해시테이블 엔트리의 index는 sym_table의 ID로, ID는 실제 배열 인덱스 +1한 값
         // sym_table에서 ID-1를 인덱스로 str_pool 시작 인덱스를 찾고 문자열을 읽어, 현재 str_pool이 읽은 식별자 문자열과 비교
-        if (strncmp(str_pool + sym_table[entry->index - 1][1], str_pool + index_start, length) == 0) {
+        if (strncmp(str_pool + sym_table[entry->index - 1][1], str_pool + index_start, length) == 0
+            && sym_table[entry->index - 1][2] == length) {
             return entry;
         }
         entry = entry->next;
