@@ -1,0 +1,2 @@
+int	a,b,c;
+char	name,phone_number,address,IP,postalCode,semester_2025;
