@@ -1,9 +1,7 @@
-This
-is compiler
-test
-a	_	C
-a1` a1 1a 11 aaaaaaaaaaaaaaa 1
-abcdeabcdeabcdea
-sadddddddddddddddddddddddddddddddd
-Com1 C1 _K k_ 1_ _2
-a\rb\nc\td
+    1 a
+This  is a   pen
+aA Aa a_ _a 1_ _1 _,1;a,A; ( A* /A a)
+abcde1234512345
+ABCDE12345123456
+abc__123451234567
+z

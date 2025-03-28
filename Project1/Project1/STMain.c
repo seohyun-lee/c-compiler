@@ -1,89 +1,104 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#include <stdio.h>          // 입출력 헤더
+#include <string.h>         // 문자열 관련 함수 사용을 위한 헤더
+#include <stdbool.h>        // bool, true, false 사용을 위한 헤더
+#include <stdlib.h>         // malloc 할당을 위한 헤더
 
-#define SYM_TABLE_SIZE  100
-#define STR_POOL_SIZE 500
-#define HASH_SIZE 23
-#define TRUE    1
-#define FALSE   0
+#define SYM_TABLE_SIZE  100         // 심볼 테이블 사이즈 정의
+#define STR_POOL_SIZE   500         // string pool 사이즈 정의
+#define HASH_TABLE_SIZE 23          // 해시 테이블 사이즈 정의
 
-char separators[] = " ,;\t\n\r\n"; //구분자 종류 (왜 \n이 두개?)
-int sym_table[SYM_TABLE_SIZE][3];
-char str_pool[STR_POOL_SIZE];
-//char hash_bucket[HASH_SIZE];
-int sym_id; // 0으로 기본 초기화
+typedef struct HTentry* HTpointer;  // 해시 테이블 엔트리 구조체의 포인터
+typedef struct HTentry {            // 해시 테이블 엔트리 구조체
+    int index;
+    HTpointer next;
+} HTentry;
 
-typedef struct SymbolNode {
-    int sym_id;
-    struct SymbolNode* next;
-} SymbolNode;
+char separators[] = " ,;\t\n\r\n";  // 구분자
+int sym_table[SYM_TABLE_SIZE][3];   // 심볼 테이블
+char str_pool[STR_POOL_SIZE];       // string pool
+int sym_id;                         // 심볼 테이블 ID
+HTpointer HT[HASH_TABLE_SIZE];      // 해시 테이블
 
-SymbolNode* hash_bucket[HASH_SIZE];  // 각 버킷의 연결 리스트 헤드
 
-void print_sym_table(void)
-{
-    printf("\nSymbol Table\nIndex\tLength\tSymbol\n"); // ID였다면 i+1
-    for (int i = 0; i < sym_id; i++) {
-        int index = sym_table[i][1];
-        int length = sym_table[i][2];
-
-        printf("%d\t%d\t", i, length);
-        for (int j = 0; j < length; j++) {
-            putchar(str_pool[index + j]);
-        }
-        putchar('\n');
+/* add_hash_table()
+*
+* 입력:
+* index - 현재 string pool 위치
+* hscode - 현재 입력된 symbol의 hash code
+*
+* 출력: 없음
+*/
+void add_hash_table(int index, int hscode) {
+    // 새 항목 생성 및 초기화
+    HTpointer newEntry = (HTpointer)malloc(sizeof(HTentry));
+    if (newEntry == NULL) {
+        printf("메모리 할당 실패\n");
+        exit(1);
     }
-    return;
+    newEntry->index = index;    // 해당 엔트리의 인덱스를 설정
+    newEntry->next = NULL;      // 연결 리스트의 끝임을 나타냄
+
+    if (HT[hscode] == NULL) {   // 해시 테이블에 해당 해시 코드로 엔트리가 존재하는지 확인
+        HT[hscode] = newEntry;  // 없으면 바로 추가
+    }
+    else {
+        // 있ew[[면 체이닝 방식으로 새 항목을 리스트 맨 앞에 추가
+        newEntry->next = HT[hscode];  // 새 항목의 next는 기존 첫 번째 항목
+        HT[hscode] = newEntry;        // 해시 테이블의 해당 위치를 새 항목으로 업데이트
+
+        // 이미 항목이 엔트리가, 리스트의 맨 앞에 추가
+        newEntry->next = HT[hscode];
+        HT[hscode] = newEntry;
+    }
 }
-
-void print_hash_bucket(void) {
-    printf("\nHash Buckets (Chaining)\n");
-    for (int i = 0; i < HASH_SIZE; i++) {
-        printf("[%d] -> ", i);
-        SymbolNode* node = hash_bucket[i];
-        while (node != NULL) {
-            int idx = sym_table[node->sym_id][1];
-            int len = sym_table[node->sym_id][2];
-            for (int j = 0; j < len; j++) {
-                putchar(str_pool[idx + j]);
-            }
-            printf(" -> ");
-            node = node->next;
-        }
-        printf("NULL\n");
+// 해시 테이블에 삽입
+void add_hash_table(int index, int hscode) { // void는 어떤 값이든 반환할수가 있다
+    HTpointer newEntry = (HTpointer)malloc(sizeof(HTentry)); // 구조체만큼 할당받고 HTpointer형태를 가진다
+    if (newEntry == NULL) { // 널 체크 필수
+        printf("메모리 할당 실패");
+        exit(1);
     }
-    // free
-    for (int i = 0; i < HASH_SIZE; i++) {
-        SymbolNode* node = hash_bucket[i];
-        while (node != NULL) {
-            SymbolNode* tmp = node;
-            node = node->next;
-            free(tmp);
-        }
+    newEntry->index = index;
+    newEntry->next = NULL;
+
+    if (HT[hscode] == NULL) {
+        HT[hscode] = newEntry;
+    }
+    else {
+        newEntry->next = HT[hscode];
+        HT[hscode] = newEntry;
     }
 }
 
 int insert_symbol(const char* str, int index_start, int length) {
-    // 새로 추가
     int key = calc_key(str_pool + index_start);
-    int hash = hash_division_method(key);
+    int hash_value = divisionMethod(key, HASH_TABLE_SIZE);
 
-    SymbolNode* node = hash_bucket[hash];
-    while (node != NULL) {
-        int idx = sym_table[node->sym_id][1];
-        int l = sym_table[node->sym_id][2];
-
-        if (l == length && strncmp(str_pool + idx, str, length) == 0) {
-            // 중복 식별자 → 기존 ID 출력
-            printf("Already exists: ID=%d, Symbol=", node->sym_id);
-            for (int i = 0; i < l; i++) putchar(str_pool[idx + i]);
-            putchar('\n');
-            return node->sym_id;
-        }
-        node = node->next;
+    HTpointer htp = lookup_hash_table(key, hash_value);
+    if (htp == NULL) {
+        add_hash_table(key, hash_value);
+        printf("%d\t%d)\n", hash_value, key);
+        return 0;
     }
+    else {
+        printf("%d\t%d (already exists)\n", hash_value, key);
+        return -1; // -1이 리턴되는 경우 string pool에서 빼야
+    }
+    //HTpointer node = HT[hash];
+
+    //while (node != NULL) {
+    //    int idx = sym_table[node->sym_id][1];
+    //    int l = sym_table[node->sym_id][2];
+
+    //    if (l == length && strncmp(str_pool + idx, str, length) == 0) {
+    //        // 중복 식별자 → 기존 ID 출력
+    //        printf("Already exists: ID=%d, Symbol=", node->sym_id);
+    //        for (int i = 0; i < l; i++) putchar(str_pool[idx + i]);
+    //        putchar('\n');
+    //        return node->sym_id;
+    //    }
+    //    node = node->next;
+    //}
 
     // 새 식별자 추가
     if (sym_id >= SYM_TABLE_SIZE) {
@@ -116,31 +131,83 @@ int calc_key(char* str)
     return key;
 }
 
-unsigned int hash_division_method(int key) {
-    return key % HASH_SIZE;
+int divisionMethod(int key, int tableSize) {
+    return key % tableSize;
 }
 
-unsigned int hash_midsquare_method(int base) {
-    unsigned long long square = (unsigned long long)base * base;
+// lookup_hash_table을 대신 봄 이거 삭제
+//int find_symbol(const char* str, int len) {
+//    for (int i = 0; i < sym_id; i++) {
+//        int idx = sym_table[i][1];
+//        int l = sym_table[i][2];
+//        if (l == len && strncmp(str_pool + idx, str, len) == 0) {
+//            return i;  // 이미 존재하는 심볼의 ID 반환
+//        }
+//    }
+//    return -1;  // 없음
+//}
 
-    // 중간 비트를 추출 (예: 32비트 중 가운데 8비트 사용)
-    unsigned int mid = (square >> 8) & 0xFFFF;
+// string pool
+//심볼테이블 인덱스값으로 문자열 값 읽어와 인덱스 스트링풀 문자열 비교한다거나 해서 해라??
+HTpointer lookup_hash_table(int index, int hscode) {
+    HTpointer entry = HT[hscode];
 
-    return mid % HASH_SIZE;
+    while (entry != NULL) {
+        if (strncmp(sym_table[entry->index], sym_table[index])) { // 뭐 이런식 (strncmp?? strcmp??)
+            return entry;
+        }
+        entry = entry->next;
+    }
+    return NULL;
 }
 
-int find_symbol(const char* str, int len) {
+
+// 심볼 테이블 출력 (수정해야!!!!!!!!1
+void print_sym_table(void)
+{
+    printf("\nSymbol Table\nIndex\tLength\tSymbol\n"); // ID였다면 i+1
     for (int i = 0; i < sym_id; i++) {
-        int idx = sym_table[i][1];
-        int l = sym_table[i][2];
-        if (l == len && strncmp(str_pool + idx, str, len) == 0) {
-            return i;  // 이미 존재하는 심볼의 ID 반환
+        int index = sym_table[i][1];
+        int length = sym_table[i][2];
+
+        printf("%d\t%d\t", i, length);
+        for (int j = 0; j < length; j++) {
+            putchar(str_pool[index + j]);
+        }
+        putchar('\n');
+    }
+    return;
+}
+
+// 해시 테이블 출력
+void print_hash_table() {
+    printf("\nHash Table:\n");
+    for (int i = 0; i < HASH_TABLE_SIZE; i++) {
+        HTpointer entry = HT[i];
+        if (entry != NULL) {
+            printf("[%d]: ", i);
+            while (entry != NULL) {
+                printf("%d -> ", entry->index);
+                entry = entry->next;
+            }
+            printf("NULL\n");
         }
     }
-    return -1;  // 없음
 }
 
+void free_memory_allocations()
+{
+    // 해시 테이블 메모리 할당 해제 
+    for (int i = 0; i < HASH_TABLE_SIZE; i++) {
+        HTpointer node = HT[i];
+        while (node != NULL) {
+            HTpointer tmp = node;
+            node = node->next;
+            free(tmp);
+        }
+    }
 
+}
 
 int main() {
     FILE* fp;
@@ -212,21 +279,9 @@ int main() {
     } while (c != EOF);
 
     print_sym_table();
-    print_hash_bucket();
+    print_hash_table();
 
     fclose(fp); // 파일 닫기
+    free_memory_allocations();
     return 0;
 }
-
-/*
-
-int midsquareMethod()
-{
-
-}
-
-int foldingMethod()
-{
-
-}
-*/
