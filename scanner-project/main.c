@@ -35,9 +35,12 @@ const char *token_names[] = {
     [TASSIGN] = "TASSIGN",
     [TEQUAL] = "TEQUAL",
     [TNOTEQU] = "TNOTEQU",
+    [TLESS] = "TLESS",
+    [TGREAT] = "TGREAT",
     [TLESSE] = "TLESSE",
     [TGREATE] = "TGREATE",
 
+    [TNOT] = "TNOT",
     [TAND] = "TAND",
     [TOR] = "TOR",
     [TINC] = "TINC",
@@ -59,8 +62,8 @@ const char *token_names[] = {
     [TSEMI] = "TSEMI",
     [TLPAREN] = "TLPAREN",
     [TRPAREN] = "TRPAREN",
-    [TRSQUARE] = "TRSQUARE",
     [TLSQUARE] = "TLSQUARE",
+    [TRSQUARE] = "TRSQUARE",
     [TLBRACE] = "TLBRACE",
     [TRBRACE] = "TRBRACE",
 
