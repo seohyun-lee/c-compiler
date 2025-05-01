@@ -1,10 +1,6 @@
 %%
-Mega-	yymore();
-Kludge	ECHO;
-Foobar	ECHO; yyless(3); 
-bar	ECHO;
-[a-z]+	printf("IDENT\n");
-.	;
+[a-z]+	printf("ide=>%s\n", yytext);
+integer	printf("kw integer\n");
 %%
 
 int main()

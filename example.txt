@@ -1,3 +1,6 @@
-안녕하세요.
-반갑습니다.
-이것은 example.txt입니다.
+int main(void)
+{
+    int result;
+    result = 3 + 5;
+    return result;
+}

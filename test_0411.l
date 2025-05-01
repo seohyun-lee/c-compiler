@@ -10,7 +10,10 @@ digit	[0-9]
 "{"				printf("begin");
 "}"				printf("end");
 int				printf("integer");
-[a-zA-Z_][a-zA-Z0-9_]*		ECHO;
+[a-zA-Z0-9]*"n"		 {
+					printf("%c", yytext[yyleng-1]);
+				}
+[a-zA-Z_][a-zA-Z0-9_]*	ECHO;
 .				printf("%s", yytext);
 %%
 

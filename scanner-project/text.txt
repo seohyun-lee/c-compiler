@@ -1,0 +1,14 @@
+int main(void)
+{
+    int result;
+    int 123abc;
+    result = 3 + 5;
+    return result;
+    // hi
+    /* hey */
+    int a = 1;
+    int 0 = 1;
+    int 90 = 0;
+    char 1axx = 'c';
+
+}
