@@ -7,6 +7,7 @@
 extern int process_sym_table(char *);
 extern void print_error(int err_num, int yylineno, char* token);
 extern int sym_table_index;
+extern int duplicate_flag;
 %}
 %option yylineno
 
@@ -20,6 +21,8 @@ extern int sym_table_index;
 "return"						return(TRETURN);
 "void"							return(TVOID);
 "while"							return(TWHILE);
+"/*"([^*]|\*+[^*/])*\**"*/"		;
+"//".*							;
 "+"                             return(TPLUS);
 "-"                             return(TMINUS);
 "*"                             return(TMUL);
@@ -40,7 +43,7 @@ extern int sym_table_index;
 "/="							return(TDIVASSIGN);
 "%="							return(TMODASSIGN);
 [0-9]+[A-Za-z0-9_]+				{
-                                    print_error(2, yylineno, yytext);
+                                    print_error(4, yylineno, yytext);
                                     return(TERROR);
                                 }
 [+\-]?[1-9][0-9]*|0([0-7]+|(x|X)[0-9A-Fa-f]*)?	return(TINTNUM);
@@ -48,14 +51,17 @@ extern int sym_table_index;
 [A-Za-z_][A-Za-z0-9_]*			{
                                     if (yyleng > 15) {
                                         print_error(1, yylineno, yytext);
-                                        return TERROR;
+                                        return(TERROR);
                                     }
                                     int result = process_sym_table(yytext);
                                     if (result == -1) { // overflow
                                         print_error(3, yylineno, yytext);
                                         return(TERROR);
                                     }
-                                    return TIDENT;
+                                    else if (result == 1) { // duplicated
+                                        duplicate_flag = 1;
+                                    }
+                                    return(TIDENT);
                                 }
                                 return(TIDENT);
 \"([^\"\\]|\\.)*\"              return(TSTRING);
@@ -68,8 +74,6 @@ extern int sym_table_index;
 "}"                             return(TRBRACE);
 "["     return(TLSQUARE);
 "]"     return(TRSQUARE);
-"/*"([^*]|\*+[^*/])*\**"*"			;
-"//".*							;
 [ \t\n] 						;
 .							{
                                 print_error(2, yylineno, yytext);

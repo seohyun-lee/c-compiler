@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "tn.h"
 
 extern int yylex();
@@ -10,6 +11,8 @@ extern void init_sym_table(void);
 extern void print_sym_table(void);
 extern void print_hash_table(void);
 extern int sym_table_index;
+
+int duplicate_flag = 0;
 
 const char *token_names[] = {
     [TEOF] = "TEOF",
@@ -73,38 +76,19 @@ int main(void)
 
 	while((tn=yylex())!=TEOF) {
 		if (tn == TERROR) continue;
+        const char *name = token_names[tn];
+        const char *tabs = (strlen(name) < 8) ? "\t\t" : "\t";
+		char *suffix = duplicate_flag ? " (already exists)" : "";
 		switch(tn){ 
 			case TIDENT:
-				printf("%d\t%s\t\t%d\t%s\n", yylineno, token_names[tn], sym_table_index, yytext);
+				printf("%d\t%s%s%d\t\t%s%s\n", yylineno, name, tabs, sym_table_index, yytext, suffix);
+				duplicate_flag = 0;
 				break;
 			default:
-				printf("%d\t%s\t\t\t%s\n", yylineno, token_names[tn], yytext);
+				printf("%d\t%s%s\t\t%s\n", yylineno, name, tabs, yytext);
 				
 		}
-				// switch(tn){
-			// case TCONST: print_token(yylineno, TCONST, sym_table_index, yytext); break;
-			// case TELSE: printf("else\n"); break;
-			// case TIF: printf("if\n"); break;
-			// case TINT: printf("int\n"); break;
-			// case TRETURN: printf("return\n"); break;
-			// case TVOID: printf("void\n"); break;
-			// case TWHILE: printf("while\n"); break;
-			// case TEQUAL: printf("==\n"); break;
-			// case TNOTEQU: printf("!=\n"); break;
-			// case TLESSE: printf("<=\n"); break;
-			// case TGREATE: printf(">=\n"); break;
-			// case TAND: printf("&&\n"); break;
-			// case TOR: printf("||\n"); break;
-			// case TINC: printf("++\n"); break;
-			// case TDEC: printf("--\n"); break;
-			// case TADDASSIGN: printf("+=\n"); break;
-			// case TSUBASSIGN: printf("-=\n"); break;
-			// case TMULASSIGN: printf("*=\n"); break;
-			// case TDIVASSIGN: printf("/=\n"); break;
-			// case TMODASSIGN: printf("%%=\n"); break;
-			// default: printf("%s\n", yytext); break;
-		// }
 	}
-	// print_sym_table();
+	print_sym_table();
 	print_hash_table();
 }

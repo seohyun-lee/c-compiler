@@ -7,18 +7,22 @@ void print_error(int err_num, int yylineno, char *token)
 	{
 		case 1:
 			/* too long identifier */
-			printf("%d\tERROR\t\t\ttoo long identifier (%s)\n", yylineno, token);
+			printf("%d\tERROR\t\t\t\tToo long identifier (%s)\n", yylineno, token);
 			break;
 		case 2:
-			/* illegal identifier */
-			printf("%d\tERROR\t\t\tillegal identifier (%s)\n", yylineno, token);
+			/* invalid character */
+			printf("%d\tERROR\t\t\t\tInvalid character (%s)\n", yylineno, token);
 			break;
 		case 3:
 			/* overflow */
-			printf("%d\tERROR\t\t\toverflow\n", yylineno);
+			printf("%d\tERROR\t\t\t\tOverflow\n", yylineno);
+			break;
+		case 4:
+			/* start with digit */
+			printf("%d\tERROR\t\t\t\tStart with digit (%s)\n", yylineno, token);
 			break;
 		default:
-			printf("%d\tERROR\t\t\tunknown Error\n", yylineno);
+			printf("%d\tERROR\t\t\t\tunknown Error\n", yylineno);
 			break;
 	}
 }

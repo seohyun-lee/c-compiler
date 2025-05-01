@@ -155,6 +155,6 @@ int process_sym_table(char* identifier) {
     }
     else {
         printf("%d\t%s (already exists)\n", hash_value, str_pool + index_start); // πˆ∆€¿« ≥ªøÎ¿ª »≠∏Èø° √‚∑¬
-        return 0;
+        return 1;
     }
 }
