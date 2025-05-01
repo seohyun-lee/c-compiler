@@ -67,7 +67,7 @@ extern int duplicate_flag;
                                     return TERROR;
                                 }
 
-[A-Za-z_][A-Za-z0-9_]*			{   // 식별자 처리 (길이 15 초과 시 에러)
+[A-Za-z_][A-Za-z0-9_]*		{   // 식별자 처리 (길이 15 초과 시 에러)
                                     if (yyleng > 15) {
                                         print_error(1, yylineno, yytext);
                                         return(TERROR);
@@ -77,10 +77,14 @@ extern int duplicate_flag;
                                     if (result == -1) { // 오버플로우 시 에러
                                         print_error(3, yylineno, yytext);
                                         return(TERROR);
-                                    }
-                                    else if (result == 1) { // 중복 시 duplicate_flag을 1로, 정상 식별자로 처리
-                                        duplicate_flag = 1;
-                                    }
+                                    }  else {
+                                        if (duplicate_flag == 0) {
+                                            printf("%d\tTIDENT\t\t%d\t\t%s\n", yylineno, result, yytext);
+                                        } else {
+                                            printf("%d\tTIDENT\t\t%d\t\t%s (already exists)\n", yylineno, result, yytext);
+                                            duplicate_flag = 0;  // 중복 플래그 초기화
+                                        }
+				    }
                                     return(TIDENT); // 정상 식별자
                                 }
 \"([^\"\\]|\\.)*\"              return(TSTRING);    // 문자열 상수
@@ -93,7 +97,7 @@ extern int duplicate_flag;
 "}"                             return(TRBRACE);
 "["                             return(TLSQUARE);
 "]"                             return(TRSQUARE);
-[ \t\n] 						;
+[ \t\n\r] 						;	// 캐리지리턴을 추가
 .							    {   // 위의 패턴에 모두 해당되지 않는 경우 에러
                                     print_error(2, yylineno, yytext);
                                     return TERROR;

@@ -142,6 +142,7 @@ void print_hash_table() {
 
 int index_start = 0;
 int sym_table_index = 0;
+int duplicate_flag = 0;
 
 // 해시 심볼 테이블 처리 함수
 int process_sym_table(char* identifier) {
@@ -167,10 +168,10 @@ int process_sym_table(char* identifier) {
             return -1;
         }
         str_pool[index_start++] = '\0';
-        return 0;
+        return sym_table_index;
     }
     else {
-        printf("%d\t%s (already exists)\n", hash_value, str_pool + index_start); // 버퍼의 내용을 화면에 출력
-        return 1;
+        duplicate_flag = 1;
+        return htp->index;
     }
 }
