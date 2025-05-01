@@ -1,0 +1,13 @@
+/* This is
+sample input */
+int main(void)
+{ //
+	int result;
+	int 123abc;
+	int ab^^c;
+	int aaaabbbbccccddddeeee;
+	float fnum = -0.24;
+	result = 3+5;
+	char *str = "hello";
+	return result;
+}

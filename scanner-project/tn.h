@@ -1,3 +1,4 @@
+// tn.h: 열거형 tnumber가 정의된 사용자 정의 헤더 파일
 enum tnumber {
     TEOF,
     TCONST, TELSE, TIF, TINT, TFLOAT, TCHAR, TRETURN, TVOID, TWHILE,

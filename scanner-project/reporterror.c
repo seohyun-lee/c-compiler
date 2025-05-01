@@ -1,6 +1,7 @@
+// reporterror.c: 에러 메시지를 출력하는 함수가 정의된 c 파일
 #include <stdio.h>
-#include <stdlib.h>
 
+// 에러 메시지를 출력하는 함수
 void print_error(int err_num, int yylineno, char *token)
 {
 	switch (err_num)
