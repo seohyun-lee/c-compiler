@@ -23,3 +23,8 @@ void print_error(int err_num)
 	}
 
 }
+
+void yyerror(char* s)
+{
+	printf("%s\n", s);
+}

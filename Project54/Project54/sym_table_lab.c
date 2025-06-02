@@ -8,7 +8,7 @@
 #define STR_POOL_SIZE   1000
 char separators[] = " ,;\t\n\r\n";
 char str_pool[STR_POOL_SIZE];
-int sym_table[SYM_TABLE_SIZE][2];
+int sym_table[SYM_TABLE_SIZE][3];
 int index_start = 0;
 int sym_table_index = 0;
 
@@ -68,16 +68,22 @@ void init_sym_table() {
     for (i = 0; i < SYM_TABLE_SIZE; i++) {
         sym_table[i][0] = -1;
         sym_table[i][1] = -1;
+        sym_table[i][2] = -1;
     }
+}
+
+// 심볼 테이블 업데이트 함수
+void update_sym_table(int id_index, int attr_num, int attr_value) {
+    sym_table[id_index - 1][attr_num + 2] = attr_value; // macro
 }
 
 void print_sym_table() {
     int i;
     printf("\nSymbol Table\n");
-    printf("ID\tIndex\tLength\tSymbol\n");
+    printf("ID\tIndex\tLength\tSymbol\tAttributes\n");
     for (i = 0; i < SYM_TABLE_SIZE; i++) {
         if (sym_table[i][0] != -1) {
-            printf("%d\t%d\t%d\t%s\n", i+1, sym_table[i][0], sym_table[i][1], str_pool+sym_table[i][0]);
+            printf("%d\t%d\t%d\t%s\n", i+1, sym_table[i][0], sym_table[i][1], str_pool+sym_table[i][0], sym_table[i][2]);
         }
     }
 }
