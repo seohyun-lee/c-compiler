@@ -4,17 +4,19 @@
 #include <malloc.h>
 
 /*yacc source for Mini C*/
-void semantic(int);
 extern void update_sym_table(int id_index, int attr_num, int attr_value);
+void update_sym_table_param(int id_index, int param_count, int param_type[], int param_ids[]);
 extern yyerror(const char*);
 int current_type;
 int is_const = 0;
-extern int st_index;
+extern int st_index; /* lex에서 process_sym_table 후에 그 결과(id)가 저장되는 변수 */
 
-/* 가변 길이 파라미터 타입 리스트 */
-int *param_types = NULL;
-int param_count = 0; 
+/* 가변 길이 파라미터 타입 및 이름(string pool index) 리스트 */
+int param_types[256];
+int param_ids[256];
 int param_capacity = 0;
+int param_count = 0;
+int saved_func_id = -1;
 
 %}
 
@@ -29,166 +31,191 @@ int param_capacity = 0;
 %nonassoc TELSE
 
 %%
-mini_c 			: translation_unit				{semantic(1);};
-translation_unit 		: external_dcl				{semantic(2);}
-			| translation_unit external_dcl			{semantic(3);};
-external_dcl 		: function_def				{semantic(4);}
-		  	| declaration				{semantic(5);};
-function_def 		: function_header compound_st		{semantic(6);};
+/* 프로그램 전체 */
+mini_c 				: translation_unit						;
+/* 외부 선언 여러 개 */
+translation_unit 	: external_dcl			
+					| translation_unit external_dcl			;
+/* 외부 선언: 함수 정의 혹은 전역 변수 선언 */
+external_dcl 		: function_def				
+		  			| declaration							;
+/* 함수 정의(Function Definition) */
+function_def 		: function_header compound_st			;
+/* 함수 선언부*/
 function_header 	: dcl_spec function_name formal_param	{
-														update_sym_table(st_index, 0, current_type);
-														update_sym_table(st_index, 1, is_const); 
-														update_sym_table(st_index, 2, param_count);
-														for (int i = 0; i < param_count; i++) {
-															update_sym_table(func_id, 3 + i, param_types[i]);
-														}
-														free(param_types);
-														  param_types = NULL;
-														  param_capacity = 0;
-														  param_count = 0;
-														  is_const = 0;
-														  semantic(7);
-													   }
-														semantic(7);
-														};
-dcl_spec 			: dcl_specifiers				{is_const = 0; semantic(8);};
-dcl_specifiers 		: dcl_specifier				{semantic(9);}
-		 	| dcl_specifiers dcl_specifier			{semantic(10);};
-dcl_specifier 		: type_qualifier				{is_const = 1; semantic(11);}
-			| type_specifier				{semantic(12);};
-type_qualifier 		: TCONST					{semantic(13);};
-type_specifier 		: TINT					{current_type=0; semantic(14);}
-		 	| TVOID					{current_type=1; semantic(15);}
-			| TFLOAT					{current_type=2; semantic(15);}
-			| TCHAR 					{current_type=3; semantic(15);};
-function_name 		: TIDENT					{semantic(16);};
-formal_param 		: TLPAREN opt_formal_param TRPAREN 	{semantic(17);};
-opt_formal_param 		: formal_param_list				{semantic(18);}
-		   				|				{
-											param_count = 0;
-											param_capacity = 0;
-											if (param_types) { free(param_types); param_types = NULL; }
-											semantic(19);
-										};
-formal_param_list 		: param_dcl						{semantic(20);}
-		    	| formal_param_list TCOMMA param_dcl 	{semantic(21);};
-param_dcl				: dcl_spec TIDENT  { 
-											/* 스칼라 파라미터 */
-         									 if (param_count == param_capacity) {
-        									    param_capacity = (param_capacity == 0 ? 1 : param_capacity * 2);
-             									param_types = realloc(param_types, sizeof(int) * param_capacity);
-											}
-											/* current_type: 기본 타입, 0=scalar */
-          									param_types[param_count++] = current_type;
-          									update_sym_table(st_index, 0, current_type);
-          									update_sym_table(st_index, 1, is_const);
-          									update_sym_table(st_index, 2, 0); /* 0 = scalar */
-      									}
-						| dcl_spec TIDENT TLSQUARE opt_number TRSQUARE  {
-          									/* 배열 파라미터 */
-         									 if (param_count == param_capacity) {
-        									      param_capacity = (param_capacity == 0 ? 1 : param_capacity * 2);
-        									      param_types = realloc(param_types, sizeof(int) * param_capacity);
-        									  }
-											/* current_type: 기본 타입, 1=array */
-       									   param_types[param_count++] = current_type + 10;  /* 예: 코드값을 10 이상으로 구분 */
-         									update_sym_table(st_index, 0, current_type);
-          									update_sym_table(st_index, 1, is_const);
-         									update_sym_table(st_index, 2, 1);  /* 1 = array */
-     									}
-   										;
-						semantic(22);};
-compound_st 		: TLBRACE opt_dcl_list opt_stat_list TRBRACE 	{semantic(23);};
-opt_dcl_list 		: declaration_list				{semantic(24);}
-			|					{semantic(25);};
-declaration_list 		: declaration				{semantic(26);}
-			| declaration_list declaration 			{semantic(27);};
-declaration 		: dcl_spec init_dcl_list TSEMI			{semantic(28);};
-init_dcl_list 		: init_declarator				{semantic(29);}
-			| init_dcl_list TCOMMA init_declarator 		{semantic(30);};
-init_declarator 		: declarator				{semantic(31);}
-		 	| declarator TASSIGN TINTNUM		{semantic(32);};
-declarator 		: TIDENT					{
-          update_sym_table(st_index, 0, current_type);
-		  update_sym_table(st_index, 1, is_const);
-          update_sym_table(st_index, 2, 0); /* 0 = scalar */
-          semantic(33);
-      }
-	     		| TIDENT TLSQUARE opt_number TRSQUARE	{
-          update_sym_table(st_index, 0, current_type);
-          update_sym_table(st_index, 1, is_const);
-          update_sym_table(st_index, 2, 1); /* 1 = array */
-          semantic(34);
-      }
-    ;
-opt_number 		: TINTNUM				{semantic(35);}
-	     		|					{semantic(36);};
-opt_stat_list 		: statement_list				{semantic(37);}
-		 	|					{semantic(38);};
-statement_list 		: statement				{semantic(39);}
-		 	| statement_list statement 			{semantic(40);};
-statement 		: compound_st				{semantic(41);}
-	   		| expression_st				{semantic(42);}
-	   		| if_st						{semantic(43);}
-	   		| while_st					{semantic(44);}
-	   		| return_st					{semantic(45);}
-	   		;
-expression_st 	: opt_expression TSEMI				{semantic(46);};
-opt_expression 	: expression					{semantic(47);}
-		 	|						{semantic(48);};
-if_st 			: TIF TLPAREN expression TRPAREN statement %prec TLOWERTHANELSE {semantic(49);}
-			| TIF TLPAREN expression TRPAREN statement TELSE statement {semantic(50);};
-while_st 		: TWHILE TLPAREN expression TRPAREN statement 		{semantic(51);};
-return_st 		: TRETURN opt_expression TSEMI			{semantic(52);};
-expression 		: assignment_exp				{semantic(53);};
-assignment_exp 	: logical_or_exp				{semantic(54);}
-			| unary_exp TASSIGN assignment_exp 		{semantic(55);}
-			| unary_exp TADDASSIGN assignment_exp 	{semantic(56);}
-			| unary_exp TSUBASSIGN assignment_exp 	{semantic(57);}
-			| unary_exp TMULASSIGN assignment_exp 	{semantic(58);}
-			| unary_exp TDIVASSIGN assignment_exp 	{semantic(59);}
-			| unary_exp TMODASSIGN assignment_exp 	{semantic(60);}
-			;
-logical_or_exp 	: logical_and_exp				{semantic(61);}
-			| logical_or_exp TOR logical_and_exp 	{semantic(62);};
-logical_and_exp 	: equality_exp					{semantic(63);}
-		 	| logical_and_exp TAND equality_exp 	{semantic(64);};
-equality_exp 		: relational_exp				{semantic(65);}
-			| equality_exp TEQUAL relational_exp 	{semantic(66);}
-			| equality_exp TNOTEQU relational_exp 	{semantic(67);};
-relational_exp 	: additive_exp 				{semantic(68);}
-			| relational_exp TGREAT additive_exp 		{semantic(69);}
-			| relational_exp TLESS additive_exp 		{semantic(70);}
-			| relational_exp TGREATE additive_exp 	{semantic(71);}
-			| relational_exp TLESSE additive_exp 	{semantic(72);};
-additive_exp 		: multiplicative_exp				{semantic(73);}
-			| additive_exp TPLUS multiplicative_exp 	{semantic(74);}
-			| additive_exp TMINUS multiplicative_exp 	{semantic(75);};
-multiplicative_exp 	: unary_exp					{semantic(76);}
-		    	| multiplicative_exp TMUL unary_exp 		{semantic(77);}
-		    	| multiplicative_exp TDIV unary_exp 		{semantic(78);}
-		    	| multiplicative_exp TMOD unary_exp 		{semantic(79);};
-unary_exp 		: postfix_exp					{semantic(80);}
-	   		| TMINUS unary_exp				{semantic(81);}
-	   		| TNOT unary_exp				{semantic(82);}
-	   		| TINC unary_exp				{semantic(83);}
-	   		| TDEC unary_exp				{semantic(84);};
-postfix_exp 		: primary_exp					{semantic(85);}
-	      		| postfix_exp TLSQUARE expression TRSQUARE 		{semantic(86);}
-	      		| postfix_exp TLPAREN opt_actual_param TRPAREN 	{semantic(87);}
-	      		| postfix_exp TINC				{semantic(88);}
-	      		| postfix_exp TDEC				{semantic(89);};
-opt_actual_param 	: actual_param				{semantic(90);}
-		  	|						{semantic(91);};
-actual_param 		: actual_param_list				{semantic(92);};
-actual_param_list 	: assignment_exp				{semantic(93);}
-		   	| actual_param_list TCOMMA assignment_exp 	{semantic(94);};
-primary_exp 		: TIDENT						{semantic(95);}
-	     		| TINTNUM					{semantic(96);}
-	     		| TLPAREN expression TRPAREN				{semantic(97);};
+																int func_id = saved_func_id;
+																/* 반환형 기록 */
+																update_sym_table(func_id, 0, current_type);
+																/* const 여부 기록 */
+																update_sym_table(func_id, 1, is_const);
+																is_const = 0;
+																/* 파라미터 개수 기록 */
+																update_sym_table(func_id, 3, param_count);
+																/* 엔티티 종류 = 1 (함수) */
+																update_sym_table(func_id, 4, 1);
+																/* 파라미터 타입들만 저장(이름은 param_ids 위치에서 나중에 출력) */
+																if (param_count) {
+																	update_sym_table_param(func_id, param_count, param_types, param_ids);
+																}
+																/* 파라미터 배열 리셋 */
+																param_capacity = 0;
+																param_count = 0;
+															};
+/* 선언 사양자 const 및 타입 구분 */
+dcl_spec 			: dcl_specifiers						;
+dcl_specifiers 		: dcl_specifier							
+		 			| dcl_specifiers dcl_specifier			;
+dcl_specifier 		: type_qualifier				
+					| type_specifier						;
+type_qualifier 		: TCONST								{is_const = 1;};	/* is_const = 1 */
+/* 타입: int, void, float, char */
+type_specifier 		: TINT									{current_type=0;}
+		 			| TVOID									{current_type=1;}
+					| TFLOAT								{current_type=2;}
+					| TCHAR 								{current_type=3;};
+/* 함수 이름 */
+function_name 		: TIDENT								{
+																saved_func_id = st_index;
+															};
+formal_param 		: TLPAREN opt_formal_param TRPAREN
+					| TLPAREN error							/* 오류가 발생했어도 함수로 간주하기 위함 */
+					;
+/* 파라미터가 없으면 reset, 있으면 formal_param_list 호출 */
+opt_formal_param 	: TVOID									/* void만 있는 경우 → 파라미터 없음으로 처리 */
+					| formal_param_list
+		   			|										;
+formal_param_list 	: param_dcl						
+					| formal_param_list TCOMMA param_dcl 	;
+/* 함수 매개변수 정의*/
+param_dcl			: dcl_spec TIDENT						{
+																int param_st_index = st_index;
+																/* 스칼라 파라미터 */
+																/* current_type: 기본 타입, 0=scalar */
+          														update_sym_table(param_st_index, 1, is_const);
+          														update_sym_table(param_st_index, 0, current_type);
+																is_const = 0;
+          														update_sym_table(param_st_index, 2, 0);	/* 0 = scalar */
+																update_sym_table(param_st_index, 4, 3);	/* 3 = param */
+																param_types[param_count] = current_type;
+																param_ids  [param_count] = param_st_index;
+																param_count++;
+      														}
+					| dcl_spec TIDENT TLSQUARE opt_number TRSQUARE  {
+																int param_st_index = st_index;
+          														/* 배열 파라미터 */
+																/* current_type: 기본 타입, 1=array */
+          														update_sym_table(param_st_index, 1, is_const);
+         														update_sym_table(param_st_index, 0, current_type);
+																is_const = 0;
+         														update_sym_table(param_st_index, 2, 1);	/* 1 = array */
+																update_sym_table(param_st_index, 4, 3);	/* 3 = param */
+																param_types[param_count] = current_type;
+																param_ids  [param_count] = param_st_index;
+																param_count++;
+     														};
+/* 중괄호 블록 */
+compound_st 		: TLBRACE opt_dcl_list opt_stat_list TRBRACE	;
+/* 지역 변수 목록 */
+opt_dcl_list 		: declaration_list
+					|											;
+declaration_list 	: declaration				
+					| declaration_list declaration 				;
+/* 선언 */
+declaration 		: dcl_spec init_dcl_list TSEMI				;
+init_dcl_list 		: init_declarator						
+					| init_dcl_list TCOMMA init_declarator 		;
+/* 초기화 가능 선언자: 변수 정의*/
+init_declarator 	: declarator				
+		 			| declarator TASSIGN TINTNUM				
+		 			| declarator TASSIGN TFLOATNUM
+					| declarator TASSIGN TSTRING				{
+																	// 한번 더 확인
+																	int var_id = st_index;
+																	update_sym_table(var_id, 0, 3);  // 3 = char
+																	update_sym_table(var_id, 2, 1);  // 1 = array
+																};
+declarator 			: TIDENT									{
+																	int var_id = st_index;
+																	update_sym_table(var_id, 0, current_type);
+																	update_sym_table(var_id, 1, is_const);
+																	is_const = 0;
+																	update_sym_table(var_id, 2, 0); /* 0 = scalar */
+																	update_sym_table(var_id, 4, 2); /* 2 = variable */
+																}
+	     			| TIDENT TLSQUARE opt_number TRSQUARE		{
+																	int var_id = st_index;
+																	update_sym_table(var_id, 0, current_type);
+																	update_sym_table(var_id, 1, is_const);
+																	is_const = 0;
+																	update_sym_table(var_id, 2, 1); /* 1 = array */
+																	update_sym_table(var_id, 4, 2); /* 2 = variable */
+																};
+/* 선택적 배열 크기 */
+opt_number 			: TINTNUM				
+	     			|											;
+/* 선택적 문장 리스트 */
+opt_stat_list 		: statement_list				
+		 			|											;
+statement_list 		: statement				
+		 			| statement_list statement 					;
+statement 			: compound_st				
+	   				| expression_st				
+	   				| if_st						
+	   				| while_st					
+	   				| return_st									;
+expression_st 		: opt_expression TSEMI						;
+opt_expression 		: expression					
+		 			|											;
+if_st 				: TIF TLPAREN expression TRPAREN statement %prec TLOWERTHANELSE 
+					| TIF TLPAREN expression TRPAREN statement TELSE statement ;
+while_st 			: TWHILE TLPAREN expression TRPAREN statement 		;
+return_st 			: TRETURN opt_expression TSEMI				;
+expression 			: assignment_exp							;
+assignment_exp 		: logical_or_exp					
+					| unary_exp TASSIGN assignment_exp 		
+					| unary_exp TADDASSIGN assignment_exp 	
+					| unary_exp TSUBASSIGN assignment_exp 	
+					| unary_exp TMULASSIGN assignment_exp 	
+					| unary_exp TDIVASSIGN assignment_exp 	
+					| unary_exp TMODASSIGN assignment_exp 		;
+logical_or_exp 		: logical_and_exp				
+					| logical_or_exp TOR logical_and_exp 		;
+logical_and_exp 	: equality_exp					
+		 			| logical_and_exp TAND equality_exp 		;
+equality_exp 		: relational_exp				
+					| equality_exp TEQUAL relational_exp 
+					| equality_exp TNOTEQU relational_exp 		;
+relational_exp 		: additive_exp 				
+					| relational_exp TGREAT additive_exp 		
+					| relational_exp TLESS additive_exp 		
+					| relational_exp TGREATE additive_exp 	
+					| relational_exp TLESSE additive_exp 		;
+additive_exp 		: multiplicative_exp			
+					| additive_exp TPLUS multiplicative_exp 	
+					| additive_exp TMINUS multiplicative_exp 	;
+multiplicative_exp 	: unary_exp					
+					| multiplicative_exp TMUL unary_exp 		
+		   			| multiplicative_exp TDIV unary_exp 		
+		   			| multiplicative_exp TMOD unary_exp			;
+unary_exp 			: postfix_exp				
+	   				| TMINUS unary_exp			
+	   				| TNOT unary_exp				
+	   				| TINC unary_exp			
+	   				| TDEC unary_exp							;
+postfix_exp 		: primary_exp					
+	      			| postfix_exp TLSQUARE expression TRSQUARE 		
+	      			| postfix_exp TLPAREN opt_actual_param TRPAREN 	{
+																	update_sym_table(saved_func_id, 4, 1);
+																}
+	    			| postfix_exp TINC				
+	   				| postfix_exp TDEC							;
+opt_actual_param 	: actual_param			
+		  			|											;
+actual_param 		: actual_param_list							;
+actual_param_list 	: assignment_exp				
+		   			| actual_param_list TCOMMA assignment_exp 	;
+primary_exp 		: TIDENT						
+	     			| TINTNUM					
+					| TFLOATNUM
+	     			| TLPAREN expression TRPAREN				;
 %%
-
-void semantic(int n)
-{	
-	printf("reduced rule number = %d\n",n);
-}

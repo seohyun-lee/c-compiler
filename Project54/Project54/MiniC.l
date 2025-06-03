@@ -42,9 +42,8 @@ int st_index = 0;
 "*="						return(TMULASSIGN);
 "/="						return(TDIVASSIGN);
 "%="						return(TMODASSIGN);
-[0-9]+[A-Za-z0-9_]+			{
-								print_error(1);
-							}
+
+[0-9]+[A-Za-z_][A-Za-z0-9_]* 		{ print_error(1); return TERROR; }
 [A-Za-z_][A-Za-z0-9_]*				{ if(yyleng>15) { print_error(2); return(TERROR); }
 										else {st_index = process_sym_table(yytext, line_num); return(TIDENT);} }
 [+-]?([1-9][0-9]*|0([0-7]+|(x|X)[0-9A-Fa-f]*)?)		return(TINTNUM);
@@ -63,7 +62,7 @@ int st_index = 0;
 ","						return TCOMMA;
 "."						return TDOT;
 ";"						return TSEMI;
-.						print_error(3);
+.						{ print_error(3);  return TERROR; }
 %%
 
 int yywrap() {
