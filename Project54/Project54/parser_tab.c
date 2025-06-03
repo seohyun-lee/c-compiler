@@ -71,8 +71,9 @@ int param_types[256];
 int param_indexes[256];
 /* 파라미터 수 */
 int param_count = 0;
-/* 저장된 함수의 인덱스 */
-int saved_func_index = -1;
+
+int saved_func_index = -1; /* 함수의 인덱스 저장용 변수 */
+int saved_func_type = -1;  /* 함수의 리턴 타입 저장용 변수 */
 
 
 #ifndef YYLTYPE
@@ -197,17 +198,17 @@ static const short yyrhs[] = {    50,
 
 #if YYDEBUG != 0
 static const short yyrline[] = { 0,
-    37,    39,    40,    42,    43,    45,    47,    66,    67,    68,
-    69,    70,    71,    73,    74,    75,    76,    78,    79,    80,
-    83,    84,    85,    86,    87,    89,   101,   114,   116,   117,
-   118,   119,   121,   122,   123,   125,   126,   127,   128,   134,
-   142,   151,   152,   154,   155,   156,   157,   158,   159,   160,
-   161,   162,   163,   164,   165,   166,   167,   168,   169,   170,
-   171,   172,   173,   174,   175,   176,   177,   178,   179,   180,
-   181,   182,   183,   184,   185,   186,   187,   188,   189,   190,
-   191,   192,   193,   194,   195,   196,   197,   198,   199,   200,
-   201,   202,   203,   204,   207,   208,   209,   210,   211,   212,
-   213,   214,   215,   216,   217
+    38,    40,    41,    43,    44,    46,    48,    67,    68,    69,
+    70,    71,    72,    74,    75,    76,    77,    79,    83,    84,
+    87,    88,    89,    90,    91,    93,   105,   118,   120,   121,
+   122,   123,   125,   126,   127,   129,   130,   131,   132,   138,
+   146,   155,   156,   158,   159,   160,   161,   162,   163,   164,
+   165,   166,   167,   168,   169,   170,   171,   172,   173,   174,
+   175,   176,   177,   178,   179,   180,   181,   182,   183,   184,
+   185,   186,   187,   188,   189,   190,   191,   192,   193,   194,
+   195,   196,   197,   198,   199,   200,   201,   202,   203,   204,
+   205,   206,   207,   208,   211,   212,   213,   214,   215,   216,
+   217,   218,   219,   220,   221
 };
 
 static const char * const yytname[] = {   "$","error","$undefined.","TCONST",
@@ -846,11 +847,11 @@ yyreduce:
   switch (yyn) {
 
 case 7:
-#line 47 "parser.y"
+#line 48 "parser.y"
 {
 																int func_index = saved_func_index;
 																/* 리턴 타입 기록 */
-																update_sym_table(func_index, 0, current_type);
+																update_sym_table(func_index, 0, saved_func_type);
 																/* const 여부 기록 */
 																update_sym_table(func_index, 1, is_const);
 																is_const = 0;
@@ -867,31 +868,34 @@ case 7:
 															;
     break;}
 case 13:
-#line 71 "parser.y"
+#line 72 "parser.y"
 {is_const = 1;;
     break;}
 case 14:
-#line 73 "parser.y"
+#line 74 "parser.y"
 {current_type=0;;
     break;}
 case 15:
-#line 74 "parser.y"
+#line 75 "parser.y"
 {current_type=1;;
     break;}
 case 16:
-#line 75 "parser.y"
+#line 76 "parser.y"
 {current_type=2;;
     break;}
 case 17:
-#line 76 "parser.y"
+#line 77 "parser.y"
 {current_type=3;;
     break;}
 case 18:
-#line 78 "parser.y"
-{saved_func_index = st_index;;
+#line 79 "parser.y"
+{
+																saved_func_index = st_index;
+																saved_func_type = current_type;
+															;
     break;}
 case 26:
-#line 89 "parser.y"
+#line 93 "parser.y"
 {
 																int param_st_index = st_index;
 																/* 스칼라 파라미터 */
@@ -906,7 +910,7 @@ case 26:
       														;
     break;}
 case 27:
-#line 101 "parser.y"
+#line 105 "parser.y"
 {
 																int param_st_index = st_index;
           														/* 배열 파라미터 */
@@ -921,7 +925,7 @@ case 27:
      														;
     break;}
 case 39:
-#line 128 "parser.y"
+#line 132 "parser.y"
 {
 																	// 한번 더 확인
 																	int var_id = st_index;
@@ -930,7 +934,7 @@ case 39:
 																;
     break;}
 case 40:
-#line 134 "parser.y"
+#line 138 "parser.y"
 {
 																	int var_id = st_index;
 																	update_sym_table(var_id, 0, current_type);
@@ -941,7 +945,7 @@ case 40:
 																;
     break;}
 case 41:
-#line 142 "parser.y"
+#line 146 "parser.y"
 {
 																	int var_id = st_index;
 																	update_sym_table(var_id, 0, current_type);
@@ -952,7 +956,7 @@ case 41:
 																;
     break;}
 case 94:
-#line 204 "parser.y"
+#line 208 "parser.y"
 {
 																	update_sym_table(saved_func_index, 4, 1); /* 1 = function */
 																;
@@ -1155,4 +1159,4 @@ yyerrhandle:
   yystate = yyn;
   goto yynewstate;
 }
-#line 218 "parser.y"
+#line 222 "parser.y"

@@ -1,26 +1,23 @@
+/* This is
+sample input */
 
-void main()
-{
-int i,j,k;
-float rem, prime;   // rem:remainder
-int arr[10];
+const int max=100;
 
-i=2;
-while(i<=max) {
-	prime = 1;
-	k=i/2;
-	j=2;
-	while(j<=k){
-		rem=i%j;
-		if(rem==0) prime=0;  
-		++j;
+int main(int a, char c)
+{ //
+	int result = 8;
+	int hexa1 = +0x12;
+	int octa2 = -07;
+	int b, d;
+	char str[10];
+	int aaaaabbbbbccccc = 0;
+	float fnum1 = -0.24;
+	float fnum2 = +0.24;
+	if (result >= 0) {
+		result *= -3;
+	} else {
+		result %= 2;
 	}
-	if(prime==1) write(i);  
-	++i;
-}
-}
-
-int write(char text, int leng)
-{
-	return 0;
+	while (result < 0) result++;
+	return result;
 }

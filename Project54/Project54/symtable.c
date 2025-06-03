@@ -1,4 +1,5 @@
-﻿#include <stdio.h>
+﻿// symtable.c: 해시 심볼 테이블이 구현된 c 파일
+#include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -22,7 +23,7 @@ int sym_table[SYM_TABLE_SIZE][6];
 */
 int sym_table_index = 0;
 
-// 각 ID별로 최대 ATTR_POOL_SIZE자까지 속성 문자열 저장 (최대 256자로 설정하였음)
+// 각 ID별로 최대 ATTR_POOL_SIZE자까지 속성 관련 문자열 저장 (최대 256자로 설정하였음)
 char attr_pool[SYM_TABLE_SIZE][ATTR_POOL_SIZE];
 
 #define isLetter(x) ( ((x) >= 'a' && (x) <='z') || ((x) >= 'A' && (x) <= 'Z') || ((x) == '_')) 
@@ -107,7 +108,7 @@ void update_sym_table(int id_index, int attr_num, int attr_value) {
 
     switch (attr_num) {
         case 0: sym_table[i0][3] = attr_value; break;   // 엔티티 타입
-        case 1: break; // 원할 경우 const를 출력할 수 있는 로직
+        case 1: break; // const를 출력하도록 확장할 수 있는 부분 (현재는 출력 x)
         case 2: sym_table[i0][4] = attr_value; break;   // scalar(0)/array(1)
         case 3: sym_table[i0][4] = attr_value; break;   // 함수인 경우 파라미터 개수로 활용
         case 4: sym_table[i0][2] = attr_value; break;   // 엔티티 종류
@@ -136,7 +137,7 @@ void update_sym_table_param(int id_index, int param_count, int param_types[], in
 // 심볼 테이블 출력 함수
 void print_sym_table(void) {
     printf("\nSymbol Table\n");
-    printf("ID\tIndex\tLength\tLine\tSymbol\t\tAttributes\n");
+    printf("ID\tIndex\tLength\tLine\tSymbol\tAttributes\n");
 
     for (int i = 0; i < sym_table_index; i++) {
         char* name = str_pool + sym_table[i][0];

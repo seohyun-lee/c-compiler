@@ -14,7 +14,7 @@ extern int sym_table_index;
 // 전역 변수 정의
 int line_num = 1;
 
-// main(): 메인 함수 (심볼테이블 초기화, 파스, 심볼테이블 출력, 해시테이블 출력)
+// 메인 함수 (심볼테이블 초기화, yyparse, 심볼테이블 출력, 해시테이블 출력 함수 호출)
 void main()
 {
 	init_sym_table();
