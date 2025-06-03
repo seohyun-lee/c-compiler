@@ -5,10 +5,16 @@
 
 /*yacc source for Mini C*/
 void semantic(int);
-extern void update_sym_table(int,int,int);
+extern void update_sym_table(int id_index, int attr_num, int attr_value);
 extern yyerror(const char*);
 int current_type;
+int is_const = 0;
 extern int st_index;
+
+/* 가변 길이 파라미터 타입 리스트 */
+int *param_types = NULL;
+int param_count = 0; 
+int param_capacity = 0;
 
 %}
 
@@ -29,11 +35,26 @@ translation_unit 		: external_dcl				{semantic(2);}
 external_dcl 		: function_def				{semantic(4);}
 		  	| declaration				{semantic(5);};
 function_def 		: function_header compound_st		{semantic(6);};
-function_header 		: dcl_spec function_name formal_param	{update_sym_table(st_index, 0, current_type); semantic(7);};
-dcl_spec 			: dcl_specifiers				{semantic(8);};
+function_header 	: dcl_spec function_name formal_param	{
+														update_sym_table(st_index, 0, current_type);
+														update_sym_table(st_index, 1, is_const); 
+														update_sym_table(st_index, 2, param_count);
+														for (int i = 0; i < param_count; i++) {
+															update_sym_table(func_id, 3 + i, param_types[i]);
+														}
+														free(param_types);
+														  param_types = NULL;
+														  param_capacity = 0;
+														  param_count = 0;
+														  is_const = 0;
+														  semantic(7);
+													   }
+														semantic(7);
+														};
+dcl_spec 			: dcl_specifiers				{is_const = 0; semantic(8);};
 dcl_specifiers 		: dcl_specifier				{semantic(9);}
 		 	| dcl_specifiers dcl_specifier			{semantic(10);};
-dcl_specifier 		: type_qualifier				{semantic(11);}
+dcl_specifier 		: type_qualifier				{is_const = 1; semantic(11);}
 			| type_specifier				{semantic(12);};
 type_qualifier 		: TCONST					{semantic(13);};
 type_specifier 		: TINT					{current_type=0; semantic(14);}
@@ -43,10 +64,40 @@ type_specifier 		: TINT					{current_type=0; semantic(14);}
 function_name 		: TIDENT					{semantic(16);};
 formal_param 		: TLPAREN opt_formal_param TRPAREN 	{semantic(17);};
 opt_formal_param 		: formal_param_list				{semantic(18);}
-		   	|					{semantic(19);};
-formal_param_list 		: param_dcl				{semantic(20);}
+		   				|				{
+											param_count = 0;
+											param_capacity = 0;
+											if (param_types) { free(param_types); param_types = NULL; }
+											semantic(19);
+										};
+formal_param_list 		: param_dcl						{semantic(20);}
 		    	| formal_param_list TCOMMA param_dcl 	{semantic(21);};
-param_dcl 		: dcl_spec declarator			{semantic(22);};
+param_dcl				: dcl_spec TIDENT  { 
+											/* 스칼라 파라미터 */
+         									 if (param_count == param_capacity) {
+        									    param_capacity = (param_capacity == 0 ? 1 : param_capacity * 2);
+             									param_types = realloc(param_types, sizeof(int) * param_capacity);
+											}
+											/* current_type: 기본 타입, 0=scalar */
+          									param_types[param_count++] = current_type;
+          									update_sym_table(st_index, 0, current_type);
+          									update_sym_table(st_index, 1, is_const);
+          									update_sym_table(st_index, 2, 0); /* 0 = scalar */
+      									}
+						| dcl_spec TIDENT TLSQUARE opt_number TRSQUARE  {
+          									/* 배열 파라미터 */
+         									 if (param_count == param_capacity) {
+        									      param_capacity = (param_capacity == 0 ? 1 : param_capacity * 2);
+        									      param_types = realloc(param_types, sizeof(int) * param_capacity);
+        									  }
+											/* current_type: 기본 타입, 1=array */
+       									   param_types[param_count++] = current_type + 10;  /* 예: 코드값을 10 이상으로 구분 */
+         									update_sym_table(st_index, 0, current_type);
+          									update_sym_table(st_index, 1, is_const);
+         									update_sym_table(st_index, 2, 1);  /* 1 = array */
+     									}
+   										;
+						semantic(22);};
 compound_st 		: TLBRACE opt_dcl_list opt_stat_list TRBRACE 	{semantic(23);};
 opt_dcl_list 		: declaration_list				{semantic(24);}
 			|					{semantic(25);};
@@ -57,8 +108,19 @@ init_dcl_list 		: init_declarator				{semantic(29);}
 			| init_dcl_list TCOMMA init_declarator 		{semantic(30);};
 init_declarator 		: declarator				{semantic(31);}
 		 	| declarator TASSIGN TINTNUM		{semantic(32);};
-declarator 		: TIDENT					{semantic(33);}
-	     		| TIDENT TLSQUARE opt_number TRSQUARE	{semantic(34);};
+declarator 		: TIDENT					{
+          update_sym_table(st_index, 0, current_type);
+		  update_sym_table(st_index, 1, is_const);
+          update_sym_table(st_index, 2, 0); /* 0 = scalar */
+          semantic(33);
+      }
+	     		| TIDENT TLSQUARE opt_number TRSQUARE	{
+          update_sym_table(st_index, 0, current_type);
+          update_sym_table(st_index, 1, is_const);
+          update_sym_table(st_index, 2, 1); /* 1 = array */
+          semantic(34);
+      }
+    ;
 opt_number 		: TINTNUM				{semantic(35);}
 	     		|					{semantic(36);};
 opt_stat_list 		: statement_list				{semantic(37);}

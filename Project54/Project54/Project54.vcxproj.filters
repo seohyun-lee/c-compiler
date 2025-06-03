@@ -27,7 +27,7 @@
     <ClCompile Include="report_error.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="sym_table_lab.c">
+    <ClCompile Include="symtable.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

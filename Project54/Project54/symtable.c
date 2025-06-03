@@ -8,7 +8,9 @@
 #define STR_POOL_SIZE   1000
 char separators[] = " ,;\t\n\r\n";
 char str_pool[STR_POOL_SIZE];
-int sym_table[SYM_TABLE_SIZE][3];
+int sym_table[SYM_TABLE_SIZE][4];
+// 각 ID마다 최대 256자까지 속성 문자열을 저장
+char attr_str[SYM_TABLE_SIZE][256];
 int index_start = 0;
 int sym_table_index = 0;
 
@@ -69,21 +71,82 @@ void init_sym_table() {
         sym_table[i][0] = -1;
         sym_table[i][1] = -1;
         sym_table[i][2] = -1;
+        sym_table[i][3] = -1;
     }
 }
 
 // 심볼 테이블 업데이트 함수
+/* update_sym_table:
+   - id_index: 1-based 심볼 인덱스
+   - attr_num: 속성 종류
+       0 = 기본 타입 (int=0, void=1, float=2, char=3)
+       1 = const 여부 (0=non-const, 1=const)
+       2 = 변수의 배열 여부 (0=scalar, 1=array)
+       3 = 함수의 파라미터 개수
+       4 이상 = 함수 파라미터 타입 순서대로 (0=int,1=void,2=float,3=char 등)
+   - attr_value: 해당 속성의 정수 코드
+*/
 void update_sym_table(int id_index, int attr_num, int attr_value) {
-    sym_table[id_index - 1][attr_num + 2] = attr_value; // macro
+    int idx0 = id_index - 1;
+    char buffer[64];
+
+    switch (attr_num) {
+    case 0:
+        /* 기본 타입 */
+        if (attr_value == 0)      snprintf(buffer, sizeof(buffer), "int");
+        else if (attr_value == 1) snprintf(buffer, sizeof(buffer), "void");
+        else if (attr_value == 2) snprintf(buffer, sizeof(buffer), "float");
+        else if (attr_value == 3) snprintf(buffer, sizeof(buffer), "char");
+        else                       snprintf(buffer, sizeof(buffer), "type%d", attr_value);
+        snprintf(attr_str[idx0], sizeof(attr_str[idx0]), "%s", buffer);
+        break;
+
+    case 1:
+        /* const 여부 */
+        if (attr_value == 0)      snprintf(buffer, sizeof(buffer), " non-const");
+        else if (attr_value == 1) snprintf(buffer, sizeof(buffer), " const");
+        else                       snprintf(buffer, sizeof(buffer), " const?%d", attr_value);
+        strncat(attr_str[idx0], buffer,
+            sizeof(attr_str[idx0]) - strlen(attr_str[idx0]) - 1);
+        break;
+
+    case 2:
+        /* 변수의 배열 여부 */
+        if (attr_value == 0)      snprintf(buffer, sizeof(buffer), " scalar");
+        else if (attr_value == 1) snprintf(buffer, sizeof(buffer), " array");
+        else                       snprintf(buffer, sizeof(buffer), " arr?%d", attr_value);
+        strncat(attr_str[idx0], buffer,
+            sizeof(attr_str[idx0]) - strlen(attr_str[idx0]) - 1);
+        break;
+
+    case 3:
+        /* 함수의 파라미터 개수 */
+        snprintf(buffer, sizeof(buffer), " (params:%d)", attr_value);
+        strncat(attr_str[idx0], buffer,
+            sizeof(attr_str[idx0]) - strlen(attr_str[idx0]) - 1);
+        break;
+
+    default:
+        /* 함수 파라미터 타입 */
+        if (attr_value == 0)      snprintf(buffer, sizeof(buffer), ", int");
+        else if (attr_value == 1) snprintf(buffer, sizeof(buffer), ", void");
+        else if (attr_value == 2) snprintf(buffer, sizeof(buffer), ", float");
+        else if (attr_value == 3) snprintf(buffer, sizeof(buffer), ", char");
+        else                       snprintf(buffer, sizeof(buffer), ", type%d", attr_value);
+        strncat(attr_str[idx0], buffer,
+            sizeof(attr_str[idx0]) - strlen(attr_str[idx0]) - 1);
+        break;
+    }
 }
 
 void print_sym_table() {
     int i;
     printf("\nSymbol Table\n");
-    printf("ID\tIndex\tLength\tSymbol\tAttributes\n");
+    printf("ID\tIndex\tLength\tSymbol\tAttributes\tLineNumber\n");
     for (i = 0; i < SYM_TABLE_SIZE; i++) {
+        char* attribute = sym_table[i][2];
         if (sym_table[i][0] != -1) {
-            printf("%d\t%d\t%d\t%s\n", i+1, sym_table[i][0], sym_table[i][1], str_pool+sym_table[i][0], sym_table[i][2]);
+            printf("%d\t%d\t%d\t%s\t%s\t%d\n", i+1, sym_table[i][0], sym_table[i][1], str_pool+sym_table[i][0], attribute, sym_table[i][3]);
         }
     }
 }
@@ -93,7 +156,7 @@ HTpointer lookup_hash_table(int id_index, int hscode) {
 
     // 체이닝된 리스트를 탐색
     while (entry != NULL) {
-        if (strcmp(str_pool+ sym_table[entry->index-1][0], str_pool+id_index) == 0) {
+        if (strcmp(str_pool + sym_table[entry->index-1][0], str_pool + id_index) == 0) {
             return entry; // 찾은 항목 반환
         }
         entry = entry->next;
@@ -137,7 +200,7 @@ void print_hash_table() {
     }
 }
 
-int process_sym_table(char* identifier) {
+int process_sym_table(char* identifier, int line_num) {
     int hash_value = 0;
     bool flag_undefined = false;
     int result;
@@ -149,6 +212,7 @@ int process_sym_table(char* identifier) {
     HTpointer htp = lookup_hash_table(index_start, hash_value);
     if (htp == NULL) {
         sym_table[sym_table_index][0] = index_start;
+        sym_table[sym_table_index][3] = line_num;
         sym_table[sym_table_index++][1] = (int)strlen(str_pool + index_start);
 
         add_hash_table(sym_table_index, hash_value);

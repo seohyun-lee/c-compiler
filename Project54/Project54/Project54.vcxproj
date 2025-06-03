@@ -131,7 +131,7 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="parser_tab.c" />
     <ClCompile Include="report_error.c" />
-    <ClCompile Include="sym_table_lab.c" />
+    <ClCompile Include="symtable.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="parser_tab.h" />
