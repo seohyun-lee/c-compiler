@@ -17,8 +17,9 @@ int param_types[256];
 int param_indexes[256];
 /* 파라미터 수 */
 int param_count = 0;
-/* 저장된 함수의 인덱스 */
-int saved_func_index = -1;
+
+int saved_func_index = -1; /* 함수의 인덱스 저장용 변수 */
+int saved_func_type = -1;  /* 함수의 리턴 타입 저장용 변수 */
 
 %}
 
@@ -47,7 +48,7 @@ function_def 		: function_header compound_st			;
 function_header 	: dcl_spec function_name formal_param	{
 																int func_index = saved_func_index;
 																/* 리턴 타입 기록 */
-																update_sym_table(func_index, 0, current_type);
+																update_sym_table(func_index, 0, saved_func_type);
 																/* const 여부 기록 */
 																update_sym_table(func_index, 1, is_const);
 																is_const = 0;
@@ -75,7 +76,10 @@ type_specifier 		: TINT									{current_type=0;}
 					| TFLOAT								{current_type=2;}
 					| TCHAR 								{current_type=3;};
 /* 함수 이름 */
-function_name 		: TIDENT								{saved_func_index = st_index;};
+function_name 		: TIDENT								{
+																saved_func_index = st_index;
+																saved_func_type = current_type;
+															};
 formal_param 		: TLPAREN opt_formal_param TRPAREN
 					| TLPAREN error							/* 오류가 발생했어도 함수로 간주 */
 					;
