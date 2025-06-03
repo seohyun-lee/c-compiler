@@ -1,22 +1,24 @@
 %{
+/*yacc source for Mini C*/
+
 #include <stdio.h>
 #include <ctype.h>
 #include <malloc.h>
 
-/*yacc source for Mini C*/
 extern void update_sym_table(int id_index, int attr_num, int attr_value);
-void update_sym_table_param(int id_index, int param_count, int param_type[], int param_ids[]);
+void update_sym_table_param(int id_index, int param_count, int param_types[], int param_indexes[]);
 extern yyerror(const char*);
 int current_type;
-int is_const = 0;
+int is_const = 0; /* TCONST 인식여부 확인 */
 extern int st_index; /* lex에서 process_sym_table 후에 그 결과(id)가 저장되는 변수 */
 
-/* 가변 길이 파라미터 타입 및 이름(string pool index) 리스트 */
+/* 파라미터의 타입 및 인덱스(해시심볼테이블의 index) 보관용 배열 */
 int param_types[256];
-int param_ids[256];
-int param_capacity = 0;
+int param_indexes[256];
+/* 파라미터 수 */
 int param_count = 0;
-int saved_func_id = -1;
+/* 저장된 함수의 인덱스 */
+int saved_func_index = -1;
 
 %}
 
@@ -43,22 +45,21 @@ external_dcl 		: function_def
 function_def 		: function_header compound_st			;
 /* 함수 선언부*/
 function_header 	: dcl_spec function_name formal_param	{
-																int func_id = saved_func_id;
-																/* 반환형 기록 */
-																update_sym_table(func_id, 0, current_type);
+																int func_index = saved_func_index;
+																/* 리턴 타입 기록 */
+																update_sym_table(func_index, 0, current_type);
 																/* const 여부 기록 */
-																update_sym_table(func_id, 1, is_const);
+																update_sym_table(func_index, 1, is_const);
 																is_const = 0;
 																/* 파라미터 개수 기록 */
-																update_sym_table(func_id, 3, param_count);
+																update_sym_table(func_index, 3, param_count);
 																/* 엔티티 종류 = 1 (함수) */
-																update_sym_table(func_id, 4, 1);
-																/* 파라미터 타입들만 저장(이름은 param_ids 위치에서 나중에 출력) */
+																update_sym_table(func_index, 4, 1); /* 1 = function */
+																/* 파라미터 바탕으로 함수 속성 업데이트 */
 																if (param_count) {
-																	update_sym_table_param(func_id, param_count, param_types, param_ids);
+																	update_sym_table_param(func_index, param_count, param_types, param_indexes);
 																}
-																/* 파라미터 배열 리셋 */
-																param_capacity = 0;
+																/* 파라미터 갯수 리셋 */
 																param_count = 0;
 															};
 /* 선언 사양자 const 및 타입 구분 */
@@ -67,20 +68,18 @@ dcl_specifiers 		: dcl_specifier
 		 			| dcl_specifiers dcl_specifier			;
 dcl_specifier 		: type_qualifier				
 					| type_specifier						;
-type_qualifier 		: TCONST								{is_const = 1;};	/* is_const = 1 */
+type_qualifier 		: TCONST								{is_const = 1;};
 /* 타입: int, void, float, char */
 type_specifier 		: TINT									{current_type=0;}
 		 			| TVOID									{current_type=1;}
 					| TFLOAT								{current_type=2;}
 					| TCHAR 								{current_type=3;};
 /* 함수 이름 */
-function_name 		: TIDENT								{
-																saved_func_id = st_index;
-															};
+function_name 		: TIDENT								{saved_func_index = st_index;};
 formal_param 		: TLPAREN opt_formal_param TRPAREN
-					| TLPAREN error							/* 오류가 발생했어도 함수로 간주하기 위함 */
+					| TLPAREN error							/* 오류가 발생했어도 함수로 간주 */
 					;
-/* 파라미터가 없으면 reset, 있으면 formal_param_list 호출 */
+/* 파라미터가 있으면 formal_param_list 호출 */
 opt_formal_param 	: TVOID									/* void만 있는 경우 → 파라미터 없음으로 처리 */
 					| formal_param_list
 		   			|										;
@@ -90,27 +89,25 @@ formal_param_list 	: param_dcl
 param_dcl			: dcl_spec TIDENT						{
 																int param_st_index = st_index;
 																/* 스칼라 파라미터 */
-																/* current_type: 기본 타입, 0=scalar */
-          														update_sym_table(param_st_index, 1, is_const);
           														update_sym_table(param_st_index, 0, current_type);
+          														update_sym_table(param_st_index, 1, is_const);
 																is_const = 0;
           														update_sym_table(param_st_index, 2, 0);	/* 0 = scalar */
 																update_sym_table(param_st_index, 4, 3);	/* 3 = param */
 																param_types[param_count] = current_type;
-																param_ids  [param_count] = param_st_index;
+																param_indexes[param_count] = param_st_index;
 																param_count++;
       														}
 					| dcl_spec TIDENT TLSQUARE opt_number TRSQUARE  {
 																int param_st_index = st_index;
           														/* 배열 파라미터 */
-																/* current_type: 기본 타입, 1=array */
-          														update_sym_table(param_st_index, 1, is_const);
          														update_sym_table(param_st_index, 0, current_type);
+          														update_sym_table(param_st_index, 1, is_const);
 																is_const = 0;
          														update_sym_table(param_st_index, 2, 1);	/* 1 = array */
 																update_sym_table(param_st_index, 4, 3);	/* 3 = param */
 																param_types[param_count] = current_type;
-																param_ids  [param_count] = param_st_index;
+																param_indexes[param_count] = param_st_index;
 																param_count++;
      														};
 /* 중괄호 블록 */
@@ -131,8 +128,8 @@ init_declarator 	: declarator
 					| declarator TASSIGN TSTRING				{
 																	// 한번 더 확인
 																	int var_id = st_index;
-																	update_sym_table(var_id, 0, 3);  // 3 = char
-																	update_sym_table(var_id, 2, 1);  // 1 = array
+																	update_sym_table(var_id, 0, 3);  /* 3 = char */
+																	update_sym_table(var_id, 2, 1);  /* 1 = array */
 																};
 declarator 			: TIDENT									{
 																	int var_id = st_index;
@@ -205,7 +202,7 @@ unary_exp 			: postfix_exp
 postfix_exp 		: primary_exp					
 	      			| postfix_exp TLSQUARE expression TRSQUARE 		
 	      			| postfix_exp TLPAREN opt_actual_param TRPAREN 	{
-																	update_sym_table(saved_func_id, 4, 1);
+																	update_sym_table(saved_func_index, 4, 1); /* 1 = function */
 																}
 	    			| postfix_exp TINC				
 	   				| postfix_exp TDEC							;

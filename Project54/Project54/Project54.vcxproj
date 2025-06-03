@@ -139,6 +139,7 @@
   <ItemGroup>
     <None Include="MiniC.l" />
     <None Include="parser.y" />
+    <None Include="test.mc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,6 @@
 %{
 /*lex source for Mini C*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser_tab.h"
@@ -42,13 +43,12 @@ int st_index = 0;
 "*="						return(TMULASSIGN);
 "/="						return(TDIVASSIGN);
 "%="						return(TMODASSIGN);
-
-[0-9]+[A-Za-z_][A-Za-z0-9_]* 		{ print_error(1); return TERROR; }
-[A-Za-z_][A-Za-z0-9_]*				{ if(yyleng>15) { print_error(2); return(TERROR); }
-										else {st_index = process_sym_table(yytext, line_num); return(TIDENT);} }
 [+-]?([1-9][0-9]*|0([0-7]+|(x|X)[0-9A-Fa-f]*)?)		return(TINTNUM);
 [+-]?([0-9]+"."[0-9]+(e[+-]?[0-9]+)?)				return(TFLOATNUM);
 \"([^\"\\]|\\.)*\"									return(TSTRING);
+[0-9]+[A-Za-z0-9_]+ 		{ print_error(1); return TERROR; }
+[A-Za-z_][A-Za-z0-9_]*				{ if(yyleng>15) { print_error(2); return(TERROR); }
+										else {st_index = process_sym_table(yytext, line_num); return(TIDENT);} }
 "/*"([^*]|\*+[^*/])*\*\**"/"				for(int i=0; i<yyleng; i++) { if(yytext[i] == '\n') line_num++; }
 "//".*						;
 [ \t] 						;

@@ -53,24 +53,26 @@
 
 #line 1 "parser.y"
 
+/*yacc source for Mini C*/
+
 #include <stdio.h>
 #include <ctype.h>
 #include <malloc.h>
 
-/*yacc source for Mini C*/
 extern void update_sym_table(int id_index, int attr_num, int attr_value);
-void update_sym_table_param(int id_index, int param_count, int param_type[], int param_ids[]);
+void update_sym_table_param(int id_index, int param_count, int param_types[], int param_indexes[]);
 extern yyerror(const char*);
 int current_type;
-int is_const = 0;
+int is_const = 0; /* TCONST 인식여부 확인 */
 extern int st_index; /* lex에서 process_sym_table 후에 그 결과(id)가 저장되는 변수 */
 
-/* 가변 길이 파라미터 타입 및 이름(string pool index) 리스트 */
+/* 파라미터의 타입 및 인덱스(해시심볼테이블의 index) 보관용 배열 */
 int param_types[256];
-int param_ids[256];
-int param_capacity = 0;
+int param_indexes[256];
+/* 파라미터 수 */
 int param_count = 0;
-int saved_func_id = -1;
+/* 저장된 함수의 인덱스 */
+int saved_func_index = -1;
 
 
 #ifndef YYLTYPE
@@ -195,17 +197,17 @@ static const short yyrhs[] = {    50,
 
 #if YYDEBUG != 0
 static const short yyrline[] = { 0,
-    35,    37,    38,    40,    41,    43,    45,    65,    66,    67,
-    68,    69,    70,    72,    73,    74,    75,    77,    80,    81,
-    83,    84,    85,    86,    87,    89,   102,   116,   118,   119,
-   120,   121,   123,   124,   125,   127,   128,   129,   130,   136,
-   144,   153,   154,   156,   157,   158,   159,   160,   161,   162,
-   163,   164,   165,   166,   167,   168,   169,   170,   171,   172,
-   173,   174,   175,   176,   177,   178,   179,   180,   181,   182,
-   183,   184,   185,   186,   187,   188,   189,   190,   191,   192,
-   193,   194,   195,   196,   197,   198,   199,   200,   201,   202,
-   203,   204,   205,   206,   209,   210,   211,   212,   213,   214,
-   215,   216,   217,   218,   219
+    37,    39,    40,    42,    43,    45,    47,    66,    67,    68,
+    69,    70,    71,    73,    74,    75,    76,    78,    79,    80,
+    83,    84,    85,    86,    87,    89,   101,   114,   116,   117,
+   118,   119,   121,   122,   123,   125,   126,   127,   128,   134,
+   142,   151,   152,   154,   155,   156,   157,   158,   159,   160,
+   161,   162,   163,   164,   165,   166,   167,   168,   169,   170,
+   171,   172,   173,   174,   175,   176,   177,   178,   179,   180,
+   181,   182,   183,   184,   185,   186,   187,   188,   189,   190,
+   191,   192,   193,   194,   195,   196,   197,   198,   199,   200,
+   201,   202,   203,   204,   207,   208,   209,   210,   211,   212,
+   213,   214,   215,   216,   217
 };
 
 static const char * const yytname[] = {   "$","error","$undefined.","TCONST",
@@ -844,100 +846,91 @@ yyreduce:
   switch (yyn) {
 
 case 7:
-#line 45 "parser.y"
+#line 47 "parser.y"
 {
-																int func_id = saved_func_id;
-																/* 반환형 기록 */
-																update_sym_table(func_id, 0, current_type);
+																int func_index = saved_func_index;
+																/* 리턴 타입 기록 */
+																update_sym_table(func_index, 0, current_type);
 																/* const 여부 기록 */
-																update_sym_table(func_id, 1, is_const);
+																update_sym_table(func_index, 1, is_const);
 																is_const = 0;
 																/* 파라미터 개수 기록 */
-																update_sym_table(func_id, 3, param_count);
+																update_sym_table(func_index, 3, param_count);
 																/* 엔티티 종류 = 1 (함수) */
-																update_sym_table(func_id, 4, 1);
-																/* 파라미터 타입들만 저장(이름은 param_ids 위치에서 나중에 출력) */
+																update_sym_table(func_index, 4, 1); /* 1 = function */
+																/* 파라미터 바탕으로 함수 속성 업데이트 */
 																if (param_count) {
-																	update_sym_table_param(func_id, param_count, param_types, param_ids);
+																	update_sym_table_param(func_index, param_count, param_types, param_indexes);
 																}
-																/* 파라미터 배열 리셋 */
-																param_capacity = 0;
+																/* 파라미터 갯수 리셋 */
 																param_count = 0;
 															;
     break;}
 case 13:
-#line 70 "parser.y"
+#line 71 "parser.y"
 {is_const = 1;;
     break;}
 case 14:
-#line 72 "parser.y"
+#line 73 "parser.y"
 {current_type=0;;
     break;}
 case 15:
-#line 73 "parser.y"
+#line 74 "parser.y"
 {current_type=1;;
     break;}
 case 16:
-#line 74 "parser.y"
+#line 75 "parser.y"
 {current_type=2;;
     break;}
 case 17:
-#line 75 "parser.y"
+#line 76 "parser.y"
 {current_type=3;;
     break;}
 case 18:
-#line 77 "parser.y"
-{
-																saved_func_id = st_index;
-															;
-    break;}
-case 20:
-#line 81 "parser.y"
-{ /* 오류가 났지만, 일단 함수로 간주 */ ;
+#line 78 "parser.y"
+{saved_func_index = st_index;;
     break;}
 case 26:
 #line 89 "parser.y"
 {
 																int param_st_index = st_index;
 																/* 스칼라 파라미터 */
-																/* current_type: 기본 타입, 0=scalar */
-          														update_sym_table(param_st_index, 1, is_const);
           														update_sym_table(param_st_index, 0, current_type);
+          														update_sym_table(param_st_index, 1, is_const);
 																is_const = 0;
           														update_sym_table(param_st_index, 2, 0);	/* 0 = scalar */
 																update_sym_table(param_st_index, 4, 3);	/* 3 = param */
 																param_types[param_count] = current_type;
-																param_ids  [param_count] = param_st_index;
+																param_indexes[param_count] = param_st_index;
 																param_count++;
       														;
     break;}
 case 27:
-#line 102 "parser.y"
+#line 101 "parser.y"
 {
 																int param_st_index = st_index;
           														/* 배열 파라미터 */
-																/* current_type: 기본 타입, 1=array */
-          														update_sym_table(param_st_index, 1, is_const);
          														update_sym_table(param_st_index, 0, current_type);
+          														update_sym_table(param_st_index, 1, is_const);
 																is_const = 0;
          														update_sym_table(param_st_index, 2, 1);	/* 1 = array */
 																update_sym_table(param_st_index, 4, 3);	/* 3 = param */
 																param_types[param_count] = current_type;
-																param_ids  [param_count] = param_st_index;
+																param_indexes[param_count] = param_st_index;
 																param_count++;
      														;
     break;}
 case 39:
-#line 130 "parser.y"
+#line 128 "parser.y"
 {
 																	// 한번 더 확인
 																	int var_id = st_index;
-																	update_sym_table(var_id, 0, 3);  // 3 = char
-																	update_sym_table(var_id, 2, 1);  // 1 = array
+																	update_sym_table(var_id, 0, 3);  /* 3 = char */
+																	update_sym_table(var_id, 2, 1);  /* 1 = array */
 																;
     break;}
 case 40:
-#line 136 "parser.y"
+#line 134 "parser.y"
 {
 																	int var_id = st_index;
 																	update_sym_table(var_id, 0, current_type);
@@ -948,7 +941,7 @@ case 40:
 																;
     break;}
 case 41:
-#line 144 "parser.y"
+#line 142 "parser.y"
 {
 																	int var_id = st_index;
 																	update_sym_table(var_id, 0, current_type);
@@ -959,9 +952,9 @@ case 41:
 																;
     break;}
 case 94:
-#line 206 "parser.y"
+#line 204 "parser.y"
 {
-																	update_sym_table(saved_func_id, 4, 1);
+																	update_sym_table(saved_func_index, 4, 1); /* 1 = function */
 																;
     break;}
 }
@@ -1162,4 +1155,4 @@ yyerrhandle:
   yystate = yyn;
   goto yynewstate;
 }
-#line 220 "parser.y"
+#line 218 "parser.y"
