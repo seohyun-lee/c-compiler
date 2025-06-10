@@ -15,33 +15,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\Downloads\parser (1).y">
-      <Filter>소스 파일</Filter>
-    </None>
-    <None Include="..\..\..\..\Downloads\MiniC (1).l">
-      <Filter>소스 파일</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\..\Downloads\lex.yy.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Downloads\main (1).c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Downloads\parser_tab.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Downloads\report_error.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Downloads\symtable (1).c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\..\Downloads\parser_tab.h">
+    <ClInclude Include="..\..\..\..\Documents\GitHub\c-compiler\scanner-project\tn.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="tn.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\Documents\GitHub\c-compiler\scanner-project\scanner.l" />
+    <None Include="flex-2.5.4a-1.exe">
+      <Filter>소스 파일</Filter>
+    </None>
+    <None Include="scanner.l">
+      <Filter>소스 파일</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="reporterror.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="symtable.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

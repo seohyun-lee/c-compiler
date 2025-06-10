@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{2083a476-7568-419f-bcd3-25792056babf}</ProjectGuid>
-    <RootNamespace>Project54</RootNamespace>
+    <ProjectGuid>{42644aea-fa18-4cce-9e7f-e4ebf568363d}</ProjectGuid>
+    <RootNamespace>Project52</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -127,18 +127,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\Downloads\MiniC (1).l" />
-    <None Include="..\..\..\..\Downloads\parser (1).y" />
+    <None Include="..\..\..\..\Documents\GitHub\c-compiler\scanner-project\scanner.l" />
+    <None Include="flex-2.5.4a-1.exe" />
+    <None Include="scanner.l" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\Downloads\lex.yy.c" />
-    <ClCompile Include="..\..\..\..\Downloads\main (1).c" />
-    <ClCompile Include="..\..\..\..\Downloads\parser_tab.c" />
-    <ClCompile Include="..\..\..\..\Downloads\report_error.c" />
-    <ClCompile Include="..\..\..\..\Downloads\symtable (1).c" />
+    <ClInclude Include="..\..\..\..\Documents\GitHub\c-compiler\scanner-project\tn.h" />
+    <ClInclude Include="tn.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Downloads\parser_tab.h" />
+    <ClCompile Include="lex.yy.c" />
+    <ClCompile Include="main.c" />
+    <ClCompile Include="reporterror.c" />
+    <ClCompile Include="symtable.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

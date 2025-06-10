@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{2083a476-7568-419f-bcd3-25792056babf}</ProjectGuid>
+    <ProjectGuid>{fdb7498d-de58-4c8a-99ff-885b7b94548e}</ProjectGuid>
     <RootNamespace>Project54</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -127,18 +127,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\Downloads\MiniC (1).l" />
-    <None Include="..\..\..\..\Downloads\parser (1).y" />
+    <ClCompile Include="lex.yy.c" />
+    <ClCompile Include="main.c" />
+    <ClCompile Include="parser_tab.c" />
+    <ClCompile Include="report_error.c" />
+    <ClCompile Include="symtable.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\Downloads\lex.yy.c" />
-    <ClCompile Include="..\..\..\..\Downloads\main (1).c" />
-    <ClCompile Include="..\..\..\..\Downloads\parser_tab.c" />
-    <ClCompile Include="..\..\..\..\Downloads\report_error.c" />
-    <ClCompile Include="..\..\..\..\Downloads\symtable (1).c" />
+    <ClInclude Include="parser_tab.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Downloads\parser_tab.h" />
+    <None Include="MiniC.l" />
+    <None Include="parser.y" />
+    <None Include="test.mc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

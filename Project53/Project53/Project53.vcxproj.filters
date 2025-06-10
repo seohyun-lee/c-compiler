@@ -15,32 +15,20 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\Downloads\parser (1).y">
-      <Filter>소스 파일</Filter>
-    </None>
-    <None Include="..\..\..\..\Downloads\MiniC (1).l">
-      <Filter>소스 파일</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\..\Downloads\lex.yy.c">
+    <ClCompile Include="lex.yy.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Downloads\main (1).c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Downloads\parser_tab.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Downloads\report_error.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Downloads\symtable (1).c">
+    <ClCompile Include="cal2_tab.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Downloads\parser_tab.h">
+    <None Include="cal2.y">
+      <Filter>소스 파일</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cal2_tab.h">
       <Filter>소스 파일</Filter>
     </ClInclude>
   </ItemGroup>
